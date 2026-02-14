@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>معرض الصور الذكي - Pinterest Style</title>
+    <meta name="description" content="معرض صور ذكي مع نظام بحث متطور يتعلم من اهتماماتك">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!--
+    ╔════════════════════════════════════════════════════════════════╗
+    ║           معرض الصور الذكي - Pinterest Style                  ║
+    ║                      Smart Gallery v2.0                        ║
+    ╚════════════════════════════════════════════════════════════════╝
+    
+    ✨ الميزات الذكية:
+    
+    1️⃣ توسيع البحث التلقائي (Query Expansion)
+       - ابحث عن "mr robot" → يتحول إلى "mr robot hacker dark aesthetic cyberpunk"
+       - نتائج أفضل بكثير!
+       - قابل للتخصيص (انظر QUERY_MAP في الكود)
+    
+    2️⃣ تعلم من ذوقك (Taste Learning)
+       - يحفظ آخر 5 صور شاهدتها
+       - يستخدم وصفها لتحسين بحثك
+       - محفوظ في localStorage
+    
+    3️⃣ صور مشابهة تلقائياً (Auto Related)
+       - افتح صورة → انتظر ثانيتين → صور مشابهة تظهر!
+       - قابل للتفعيل/التعطيل من زر الإعدادات ⚙️
+    
+    4️⃣ تصميم Pinterest احترافي
+       - معلومات دائمة تحت كل صورة
+       - Masonry Layout متجاوب
+       - Infinite Scroll
+    
+    ⚙️ كيفية التخصيص:
+    
+    📝 تغيير API Key:
+       ابحث عن: API_KEY: 'p72LAkg7...'
+       ضع مفتاحك الخاص
+    
+    🔍 إضافة كلمات للبحث الذكي:
+       ابحث عن: QUERY_MAP
+       أضف: "الكلمة": "كلمات التوسيع"
+    
+    ⏱️ تغيير وقت الصور المشابهة:
+       ابحث عن: setTimeout(() => {
+       غيّر: 2000 (بالميلي ثانية)
+    
+    🎨 تغيير الألوان:
+       ابحث عن: :root {
+       عدّل: --primary-red, --dark-gray, etc.
+    
+    📊 حدود API:
+       - Demo: 50 طلب/ساعة
+       - Production: 5000 طلب/شهر
+    
+    🚀 للاستخدام:
+       1. افتح الملف في المتصفح
+       2. ابحث عن أي شيء
+       3. استمتع بالذكاء الاصطناعي!
+    
+    ⚠️ ملاحظة أمنية:
+       في المشاريع الحقيقية، احمِ API Key في Backend!
+       هذا للاستخدام الشخصي فقط.
+    
+    💡 نصائح:
+       - جرّب البحث عن: "mr robot", "anime", "طبيعة"
+       - اضغط ⚙️ لتفعيل/تعطيل البحث الذكي
+       - افتح صورة واتركها ثانيتين لترى الصور المشابهة
+       - امسح localStorage بـ: localStorage.clear() في Console
+    
+    ────────────────────────────────────────────────────────────────
+    -->
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-red: #e60023;
+            --dark-gray: #111111;
+            --medium-gray: #767676;
+            --light-gray: #efefef;
+            --white: #ffffff;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: 'Cairo', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--white);
+            color: var(--dark-gray);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            background: var(--white);
+            border-bottom: 1px solid var(--light-gray);
+            z-index: 100;
+            padding: 12px 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-red);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .logo svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .search-bar {
+            flex: 1;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 48px 12px 20px;
+            border: none;
+            border-radius: 24px;
+            background: var(--light-gray);
+            font-size: 16px;
+            font-family: 'Cairo', sans-serif;
+            outline: none;
+            transition: background 0.2s;
+        }
+
+        .search-input:focus {
+            background: #e0e0e0;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--medium-gray);
+            pointer-events: none;
+        }
+
+        .clear-search {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--medium-gray);
+            cursor: pointer;
+            font-size: 20px;
+            padding: 4px;
+            display: none;
+            transition: color 0.2s;
+        }
+
+        .clear-search.visible {
+            display: block;
+        }
+
+        .clear-search:hover {
+            color: var(--dark-gray);
+        }
+
+        /* Settings Toggle */
+        .settings-btn {
+            background: var(--light-gray);
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .settings-btn:hover {
+            background: #e0e0e0;
+            transform: scale(1.1);
+        }
+
+        .settings-btn.active::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 8px;
+            height: 8px;
+            background: #4caf50;
+            border-radius: 50%;
+            border: 2px solid var(--white);
+        }
+
+        /* Quick Tags */
+        .quick-tags {
+            display: flex;
+            gap: 8px;
+            padding: 16px;
+            max-width: 1600px;
+            margin: 0 auto;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .quick-tags::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tag {
+            padding: 8px 16px;
+            background: var(--light-gray);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .tag:hover {
+            background: #e0e0e0;
+        }
+
+        .tag.active {
+            background: var(--dark-gray);
+            color: var(--white);
+        }
+
+        /* Results Info */
+        .results-info {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 16px;
+            color: var(--medium-gray);
+            font-size: 14px;
+            display: none;
+        }
+
+        .results-info.visible {
+            display: block;
+        }
+
+        /* Gallery */
+        .gallery-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 8px;
+        }
+
+        .gallery {
+            column-count: 5;
+            column-gap: 16px;
+        }
+
+        @media (max-width: 1400px) {
+            .gallery { column-count: 4; }
+        }
+
+        @media (max-width: 1024px) {
+            .gallery { column-count: 3; }
+        }
+
+        @media (max-width: 768px) {
+            .gallery { column-count: 2; }
+            .header-content { flex-wrap: wrap; }
+            .search-bar { max-width: 100%; }
+        }
+
+        @media (max-width: 480px) {
+            .gallery { column-count: 1; }
+        }
+
+        .pin {
+            break-inside: avoid;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .pin:hover {
+            transform: translateY(-2px);
+        }
+
+        .pin-image-container {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .pin img {
+            width: 100%;
+            display: block;
+            border-radius: 16px;
+        }
+
+        .pin-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.2), transparent 40%, transparent);
+            opacity: 0;
+            transition: opacity 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 12px;
+        }
+
+        .pin-image-container:hover .pin-overlay {
+            opacity: 1;
+        }
+
+        .pin-overlay-top {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .pin-menu-btn {
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--dark-gray);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-weight: bold;
+        }
+
+        .pin-menu-btn:hover {
+            background: var(--white);
+            transform: scale(1.1);
+        }
+
+        .pin-overlay-bottom {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .pin-save-btn {
+            background: var(--primary-red);
+            color: var(--white);
+            border: none;
+            padding: 10px 18px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .pin-save-btn:hover {
+            background: #ad081b;
+            transform: scale(1.05);
+        }
+
+        .pin-details {
+            padding: 12px 8px 4px 8px;
+        }
+
+        .pin-title {
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--dark-gray);
+            margin-bottom: 8px;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .pin-author {
+            font-size: 13px;
+            color: var(--medium-gray);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .pin-author-name {
+            font-weight: 400;
+        }
+
+        .pin-author-name:hover {
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .loading.visible {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 16px;
+            border: 3px solid var(--light-gray);
+            border-top: 3px solid var(--primary-red);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Error */
+        .error {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 24px;
+            background: #fff5f5;
+            border: 1px solid #ffcccc;
+            border-radius: 12px;
+            text-align: center;
+            color: #d32f2f;
+            display: none;
+        }
+
+        .error.visible {
+            display: block;
+        }
+
+        .error-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .error-message {
+            font-size: 14px;
+            color: var(--medium-gray);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .modal.visible {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            position: relative;
+            max-width: 90vw;
+            max-height: 90vh;
+        }
+
+        .modal-image {
+            max-width: 100%;
+            max-height: 85vh;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-info {
+            background: var(--white);
+            padding: 24px;
+            border-radius: 0 0 12px 12px;
+            margin-top: -4px;
+        }
+
+        .modal-author {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .modal-description {
+            color: var(--dark-gray);
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+
+        .modal-stats {
+            display: flex;
+            gap: 16px;
+            color: var(--medium-gray);
+            font-size: 14px;
+            flex-wrap: wrap;
+        }
+
+        .modal-close {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--white);
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-hover);
+            transition: transform 0.2s;
+        }
+
+        .modal-close:hover {
+            transform: scale(1.1);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            display: none;
+        }
+
+        .empty-state.visible {
+            display: block;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .empty-message {
+            color: var(--medium-gray);
+            font-size: 16px;
+        }
+
+        /* Sentinel for Infinite Scroll */
+        .sentinel {
+            height: 20px;
+            margin: 20px 0;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--medium-gray);
+            font-size: 14px;
+            border-top: 1px solid var(--light-gray);
+            margin-top: 60px;
+        }
+
+        .footer a {
+            color: var(--primary-red);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark-gray);
+            color: var(--white);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 1001;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .toast.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <a href="#" class="logo" id="homeBtn" aria-label="العودة للرئيسية">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M0 12c0 5.123 3.211 9.497 7.73 11.218-.11-.937-.227-2.482.025-3.566.217-.932 1.401-5.938 1.401-5.938s-.357-.715-.357-1.774c0-1.66.962-2.9 2.161-2.9 1.02 0 1.512.765 1.512 1.682 0 1.025-.653 2.557-.99 3.978-.281 1.189.597 2.159 1.769 2.159 2.123 0 3.756-2.239 3.756-5.471 0-2.861-2.056-4.86-4.991-4.86-3.398 0-5.393 2.549-5.393 5.184 0 1.027.395 2.127.889 2.726a.36.36 0 0 1 .083.343c-.091.378-.293 1.189-.332 1.355-.053.218-.173.265-.4.159-1.492-.694-2.424-2.875-2.424-4.627 0-3.769 2.737-7.229 7.892-7.229 4.144 0 7.365 2.953 7.365 6.899 0 4.117-2.595 7.431-6.199 7.431-1.211 0-2.348-.63-2.738-1.373 0 0-.599 2.282-.744 2.84-.282 1.084-1.064 2.456-1.549 3.235C9.584 23.815 10.77 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0 0 5.373 0 12"></path>
+                </svg>
+                <span>معرض الصور</span>
+            </a>
+
+            <div class="search-bar">
+                <span class="search-icon" aria-hidden="true">🔍</span>
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    id="searchInput"
+                    placeholder="ابحث عن صور... (جرّب: mr robot, anime, طبيعة)"
+                    aria-label="البحث عن الصور"
+                >
+                <button class="clear-search" id="clearBtn" aria-label="مسح البحث" title="مسح">✕</button>
+            </div>
+
+            <button class="settings-btn" id="settingsBtn" aria-label="البحث الذكي" title="البحث الذكي - اضغط للتفعيل/التعطيل">⚙️</button>
+        </div>
+    </header>
+
+    <!-- Quick Tags -->
+    <div class="quick-tags" id="quickTags">
+        <button class="tag" data-search="nature" aria-label="البحث عن الطبيعة">🌿 طبيعة</button>
+        <button class="tag" data-search="technology" aria-label="البحث عن التكنولوجيا">💻 تكنولوجيا</button>
+        <button class="tag" data-search="animals" aria-label="البحث عن الحيوانات">🐾 حيوانات</button>
+        <button class="tag" data-search="architecture" aria-label="البحث عن العمارة">🏛️ عمارة</button>
+        <button class="tag" data-search="food" aria-label="البحث عن الطعام">🍕 طعام</button>
+        <button class="tag" data-search="travel" aria-label="البحث عن السفر">✈️ سفر</button>
+        <button class="tag" data-search="art" aria-label="البحث عن الفن">🎨 فن</button>
+        <button class="tag" data-search="business" aria-label="البحث عن الأعمال">💼 أعمال</button>
+    </div>
+
+    <!-- Results Info -->
+    <div class="results-info" id="resultsInfo"></div>
+
+    <!-- Loading -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>جاري التحميل...</p>
+    </div>
+
+    <!-- Error -->
+    <div class="error" id="error">
+        <div class="error-title">عذراً!</div>
+        <div class="error-message" id="errorMessage"></div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState">
+        <div class="empty-icon">🔍</div>
+        <div class="empty-title">لا توجد نتائج</div>
+        <div class="empty-message">حاول البحث بكلمات مختلفة</div>
+    </div>
+
+    <!-- Gallery -->
+    <div class="gallery-container">
+        <div class="gallery" id="gallery"></div>
+        <div class="sentinel" id="sentinel"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>جميع الصور من <a href="https://unsplash.com" target="_blank">Unsplash</a> • البحث الذكي 🤖 • صنع بـ ❤️</p>
+    </footer>
+
+    <!-- Modal -->
+    <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalAuthor">
+        <button class="modal-close" id="modalClose" aria-label="إغلاق">✕</button>
+        <div class="modal-content">
+            <img class="modal-image" id="modalImage" alt="">
+            <div class="modal-info">
+                <div class="modal-author" id="modalAuthor"></div>
+                <div class="modal-stats" id="modalStats"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════
+        //                    ⚙️ إعدادات API
+        // ═══════════════════════════════════════════════════════════
+        // ⚠️ تحذير: في المشاريع الحقيقية، احمِ API Key في Backend!
+        
+        const CONFIG = {
+            API_KEY: 'p72LAkg7mz2dLiG681O7ZkUhwa3CEQM5uccC3rmoQrE', // 👈 ضع مفتاحك هنا
+            API_URL: 'https://api.unsplash.com',
+            INITIAL_LOAD: 15,      // عدد الصور عند الفتح
+            PER_PAGE: 15,          // عدد الصور في كل صفحة
+            CACHE_TIME: 5 * 60 * 1000 // مدة الحفظ المؤقت (5 دقائق)
+        };
+
+        // ═══════════════════════════════════════════════════════════
+        //              🔍 توسيع البحث التلقائي (Query Expansion)
+        // ═══════════════════════════════════════════════════════════
+        // أضف كلماتك الخاصة هنا لتحسين نتائج البحث
+        
+        const QUERY_MAP = {
+            // شخصيات ومسلسلات
+            "mr robot": "mr robot hacker dark aesthetic cyberpunk hoodie",
+            "rami malek": "rami malek cinematic portrait dark mood",
+            "elliot alderson": "mr robot elliot alderson hacker cyberpunk",
+            
+            // أنواع عامة
+            "anime": "anime dark aesthetic cinematic",
+            "hacker": "hacker cyberpunk dark coding night",
+            
+            // كلمات عربية شائعة
+            "طبيعة": "nature landscape mountains forest scenic",
+            "مدن": "city urban architecture skyline night",
+            "حيوانات": "animals wildlife nature portrait",
+            "فن": "art creative illustration painting",
+            "تكنولوجيا": "technology futuristic modern minimal",
+            "سفر": "travel adventure landscape mountains beach",
+            
+            // 👇 أضف كلماتك هنا...
+            // "الكلمة": "كلمات توسيع البحث"
+        };
+
+        // ═══════════════════════════════════════════════════════════
+        //                   💾 حالة التطبيق (State)
+        // ═══════════════════════════════════════════════════════════
+        
+        let state = {
+            currentPage: 1,
+            currentQuery: '',
+            isLoading: false,
+            hasMore: true,
+            cache: new Map(),
+            taste: JSON.parse(localStorage.getItem('userTaste') || '[]'), // 🧠 ذاكرة اهتماماتك
+            autoRelated: JSON.parse(localStorage.getItem('autoRelated') || 'true') // 🤖 البحث الذكي
+        };
+
+        // ═══════════════════════════════════════════════════════════
+        //                    🎯 عناصر الصفحة (DOM)
+        // ═══════════════════════════════════════════════════════════
+        
+        const elements = {
+            gallery: document.getElementById('gallery'),
+            loading: document.getElementById('loading'),
+            error: document.getElementById('error'),
+            errorMessage: document.getElementById('errorMessage'),
+            emptyState: document.getElementById('emptyState'),
+            searchInput: document.getElementById('searchInput'),
+            clearBtn: document.getElementById('clearBtn'),
+            homeBtn: document.getElementById('homeBtn'),
+            settingsBtn: document.getElementById('settingsBtn'),
+            resultsInfo: document.getElementById('resultsInfo'),
+            modal: document.getElementById('modal'),
+            modalImage: document.getElementById('modalImage'),
+            modalAuthor: document.getElementById('modalAuthor'),
+            modalStats: document.getElementById('modalStats'),
+            modalClose: document.getElementById('modalClose'),
+            sentinel: document.getElementById('sentinel'),
+            quickTags: document.querySelectorAll('.tag'),
+            toast: document.getElementById('toast')
+        };
+
+        // ═══════════════════════════════════════════════════════════
+        //                 💾 إدارة الحفظ المؤقت (Cache)
+        // ═══════════════════════════════════════════════════════════
+        
+        function getCacheKey(query, page) {
+            return `${query || 'random'}_${page}`;
+        }
+
+        function getFromCache(key) {
+            const cached = state.cache.get(key);
+            if (cached && Date.now() - cached.timestamp < CONFIG.CACHE_TIME) {
+                return cached.data;
+            }
+            state.cache.delete(key);
+            return null;
+        }
+
+        function setCache(key, data) {
+            state.cache.set(key, {
+                data,
+                timestamp: Date.now()
+            });
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //                  🌐 استدعاء API (Fetch Photos)
+        // ═══════════════════════════════════════════════════════════
+        
+        async function fetchPhotos(query = '', page = 1) {
+            // 🔍 توسيع البحث تلقائياً
+            if (query) {
+                query = QUERY_MAP[query.toLowerCase()] || query;
+            }
+
+            const cacheKey = getCacheKey(query, page);
+            const cached = getFromCache(cacheKey);
+            
+            if (cached) {
+                return cached;
+            }
+
+            const endpoint = query
+                ? `${CONFIG.API_URL}/search/photos?query=${encodeURIComponent(query)}&page=${page}&per_page=${CONFIG.PER_PAGE}`
+                : `${CONFIG.API_URL}/photos?page=${page}&per_page=${CONFIG.PER_PAGE}`;
+
+            const response = await fetch(`${endpoint}&client_id=${CONFIG.API_KEY}`);
+
+            // معالجة الأخطاء
+            if (response.status === 403) {
+                throw new Error('QUOTA_EXCEEDED');
+            }
+
+            if (response.status === 429) {
+                throw new Error('RATE_LIMIT');
+            }
+
+            if (!response.ok) {
+                throw new Error('NETWORK_ERROR');
+            }
+
+            const data = await response.json();
+            const result = query ? data.results : data;
+            
+            setCache(cacheKey, { photos: result, total: data.total || null });
+            
+            return { photos: result, total: data.total || null };
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //                    🎨 واجهة المستخدم (UI)
+        // ═══════════════════════════════════════════════════════════
+        
+        function showLoading() {
+            elements.loading.classList.add('visible');
+        }
+
+        function hideLoading() {
+            elements.loading.classList.remove('visible');
+        }
+
+        function showError(type) {
+            const messages = {
+                QUOTA_EXCEEDED: 'تم استنفاد الحصة اليومية من API. يرجى المحاولة لاحقاً.',
+                RATE_LIMIT: 'تم تجاوز حد الطلبات. يرجى الانتظار قليلاً.',
+                NETWORK_ERROR: 'حدث خطأ في الاتصال. تحقق من الإنترنت.',
+                NO_RESULTS: 'لم يتم العثور على نتائج. حاول كلمات بحث أخرى.'
+            };
+
+            elements.errorMessage.textContent = messages[type] || 'حدث خطأ غير متوقع.';
+            elements.error.classList.add('visible');
+            setTimeout(() => elements.error.classList.remove('visible'), 5000);
+        }
+
+        function showEmptyState() {
+            elements.emptyState.classList.add('visible');
+        }
+
+        function hideEmptyState() {
+            elements.emptyState.classList.remove('visible');
+        }
+
+        function updateResultsInfo(total, query) {
+            if (total !== null) {
+                elements.resultsInfo.textContent = `${total.toLocaleString('ar-EG')} نتيجة لـ "${query}"`;
+                elements.resultsInfo.classList.add('visible');
+            } else {
+                elements.resultsInfo.classList.remove('visible');
+            }
+        }
+
+        function showToast(message, duration = 3000) {
+            elements.toast.textContent = message;
+            elements.toast.classList.add('visible');
+            setTimeout(() => {
+                elements.toast.classList.remove('visible');
+            }, duration);
+        }
+
+        function createPhotoCard(photo) {
+            const pin = document.createElement('div');
+            pin.className = 'pin';
+            
+            // الحصول على العنوان/الوصف
+            const title = photo.alt_description || photo.description || '';
+            const truncatedTitle = title.length > 60 ? title.substring(0, 60) + '...' : title;
+            
+            pin.innerHTML = `
+                <div class="pin-image-container">
+                    <img src="${photo.urls.small}" alt="${photo.alt_description || 'صورة'}" loading="lazy">
+                    <div class="pin-overlay">
+                        <div class="pin-overlay-top">
+                            <button class="pin-menu-btn" aria-label="المزيد من الخيارات" title="المزيد">⋯</button>
+                        </div>
+                        <div class="pin-overlay-bottom">
+                            <button class="pin-save-btn" aria-label="حفظ">حفظ</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pin-details">
+                    ${truncatedTitle ? `<div class="pin-title">${truncatedTitle}</div>` : ''}
+                    <div class="pin-author">
+                        <span class="pin-author-name">${photo.user.name}</span>
+                    </div>
+                </div>
+            `;
+
+            // فتح الصورة عند الضغط
+            pin.querySelector('.pin-image-container').addEventListener('click', (e) => {
+                if (!e.target.closest('button')) {
+                    openModal(photo);
+                }
+            });
+
+            // منع الأزرار من فتح الصورة
+            const saveBtn = pin.querySelector('.pin-save-btn');
+            const menuBtn = pin.querySelector('.pin-menu-btn');
+            
+            saveBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showToast('💾 ميزة الحفظ قريباً!');
+            });
+
+            menuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showToast('⋯ ميزة القائمة قريباً!');
+            });
+
+            return pin;
+        }
+
+        function displayPhotos(photos) {
+            photos.forEach(photo => {
+                const card = createPhotoCard(photo);
+                elements.gallery.appendChild(card);
+            });
+        }
+
+        function clearGallery() {
+            elements.gallery.innerHTML = '';
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //                  🖼️ نافذة عرض الصورة (Modal)
+        // ═══════════════════════════════════════════════════════════
+        
+        function openModal(photo) {
+            elements.modalImage.src = photo.urls.regular;
+            elements.modalImage.alt = photo.alt_description || 'صورة';
+            
+            const title = photo.alt_description || photo.description || '';
+            
+            elements.modalAuthor.innerHTML = `
+                <strong style="font-size: 18px;">${photo.user.name}</strong>
+                ${photo.user.username ? `<span style="color: var(--medium-gray); font-weight: 400; font-size: 14px;">@${photo.user.username}</span>` : ''}
+            `;
+            
+            elements.modalStats.innerHTML = `
+                ${title ? `<div class="modal-description">${title}</div>` : ''}
+                <div style="display: flex; gap: 16px; color: var(--medium-gray); font-size: 14px; flex-wrap: wrap;">
+                    <span>❤️ ${photo.likes.toLocaleString('ar-EG')} إعجاب</span>
+                    ${photo.downloads ? `<span>⬇️ ${photo.downloads.toLocaleString('ar-EG')} تحميل</span>` : ''}
+                    ${photo.width && photo.height ? `<span>📐 ${photo.width} × ${photo.height}</span>` : ''}
+                </div>
+            `;
+            
+            elements.modal.classList.add('visible');
+            document.body.style.overflow = 'hidden';
+
+            // 🧠 تخزين ذوق المستخدم (آخر 5 صور)
+            if (photo.alt_description) {
+                state.taste.push(photo.alt_description);
+                if (state.taste.length > 5) {
+                    state.taste.shift();
+                }
+                localStorage.setItem('userTaste', JSON.stringify(state.taste));
+            }
+
+            // 🤖 تحميل صور مشابهة تلقائياً (إذا مفعّل)
+            if (state.autoRelated) {
+                setTimeout(() => {
+                    const relatedQuery = photo.alt_description || photo.description || state.currentQuery;
+                    
+                    if (relatedQuery && relatedQuery !== state.currentQuery) {
+                        closeModal();
+                        
+                        showToast('🔍 جاري تحميل صور مشابهة...');
+                        
+                        setTimeout(() => {
+                            state.currentQuery = relatedQuery;
+                            state.currentPage = 1;
+                            state.hasMore = true;
+                            const shortQuery = relatedQuery.split(' ').slice(0, 3).join(' ');
+                            elements.searchInput.value = shortQuery;
+                            elements.clearBtn.classList.add('visible');
+                            loadPhotos(relatedQuery, 1, false);
+                        }, 300);
+                    }
+                }, 2000); // 👈 غيّر هذا الرقم لتغيير وقت الانتظار (بالميلي ثانية)
+            }
+        }
+
+        function closeModal() {
+            elements.modal.classList.remove('visible');
+            document.body.style.overflow = '';
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //                    📥 تحميل الصور (Load Photos)
+        // ═══════════════════════════════════════════════════════════
+        
+        async function loadPhotos(query = '', page = 1, append = false) {
+            if (state.isLoading) return;
+
+            state.isLoading = true;
+            showLoading();
+            hideEmptyState();
+
+            if (!append) {
+                clearGallery();
+            }
+
+            try {
+                const { photos, total } = await fetchPhotos(query, page);
+
+                if (photos.length === 0) {
+                    if (page === 1) {
+                        showEmptyState();
+                    }
+                    state.hasMore = false;
+                } else {
+                    displayPhotos(photos);
+                    state.hasMore = photos.length === CONFIG.PER_PAGE;
+                    
+                    if (query && page === 1) {
+                        updateResultsInfo(total, query);
+                    }
+                }
+
+            } catch (error) {
+                console.error('Error loading photos:', error);
+                showError(error.message);
+                state.hasMore = false;
+            } finally {
+                hideLoading();
+                state.isLoading = false;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //                      🔍 البحث (Search)
+        // ═══════════════════════════════════════════════════════════
+        
+        function handleSearch() {
+            let query = elements.searchInput.value.trim();
+            
+            if (!query) return;
+
+            // 🧠 دمج ذوق المستخدم في البحث (آخر 3 اهتمامات)
+            if (state.taste.length > 0) {
+                const tasteQuery = state.taste.slice(-3).join(" ");
+                query = query + " " + tasteQuery;
+            }
+            
+            if (query === state.currentQuery) return;
+
+            state.currentQuery = query;
+            state.currentPage = 1;
+            state.hasMore = true;
+
+            // تحديث الوسوم
+            elements.quickTags.forEach(tag => {
+                tag.classList.toggle('active', tag.dataset.search === elements.searchInput.value.trim());
+            });
+
+            // تحديث زر المسح
+            elements.clearBtn.classList.toggle('visible', elements.searchInput.value.length > 0);
+
+            loadPhotos(query, 1, false);
+        }
+
+        function clearSearch() {
+            elements.searchInput.value = '';
+            elements.clearBtn.classList.remove('visible');
+            state.currentQuery = '';
+            state.currentPage = 1;
+            elements.quickTags.forEach(tag => tag.classList.remove('active'));
+            elements.resultsInfo.classList.remove('visible');
+            loadPhotos('', 1, false);
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //              ♾️ التمرير اللانهائي (Infinite Scroll)
+        // ═══════════════════════════════════════════════════════════
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && state.hasMore && !state.isLoading) {
+                    state.currentPage++;
+                    loadPhotos(state.currentQuery, state.currentPage, true);
+                }
+            });
+        }, {
+            rootMargin: '200px'
+        });
+
+        // ═══════════════════════════════════════════════════════════
+        //                  🎮 الأحداث (Event Listeners)
+        // ═══════════════════════════════════════════════════════════
+        
+        // البحث
+        elements.searchInput.addEventListener('input', () => {
+            const hasValue = elements.searchInput.value.length > 0;
+            elements.clearBtn.classList.toggle('visible', hasValue);
+        });
+
+        elements.searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSearch();
+        });
+
+        elements.clearBtn.addEventListener('click', clearSearch);
+
+        elements.homeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            clearSearch();
+        });
+
+        // الوسوم السريعة
+        elements.quickTags.forEach(tag => {
+            tag.addEventListener('click', () => {
+                elements.searchInput.value = tag.dataset.search;
+                handleSearch();
+            });
+        });
+
+        // زر الإعدادات (البحث الذكي)
+        elements.settingsBtn.addEventListener('click', () => {
+            state.autoRelated = !state.autoRelated;
+            localStorage.setItem('autoRelated', JSON.stringify(state.autoRelated));
+            elements.settingsBtn.classList.toggle('active', state.autoRelated);
+            const status = state.autoRelated ? 'مفعّل ✨' : 'معطّل';
+            const emoji = state.autoRelated ? '🤖' : '👤';
+            showToast(`${emoji} البحث الذكي ${status}`);
+        });
+
+        // النافذة المنبثقة
+        elements.modalClose.addEventListener('click', closeModal);
+
+        elements.modal.addEventListener('click', (e) => {
+            if (e.target === elements.modal) closeModal();
+        });
+
+        // زر ESC لإغلاق النافذة
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && elements.modal.classList.contains('visible')) {
+                closeModal();
+            }
+        });
+
+        // ═══════════════════════════════════════════════════════════
+        //                    🚀 التشغيل (Initialize)
+        // ═══════════════════════════════════════════════════════════
+        
+        // تعيين حالة زر الإعدادات
+        elements.settingsBtn.classList.toggle('active', state.autoRelated);
+        
+        // بدء مراقبة التمرير اللانهائي
+        observer.observe(elements.sentinel);
+        
+        // تحميل الصور الأولى
+        loadPhotos('', 1, false);
+
+        // 🎉 إشعار ترحيبي
+        setTimeout(() => {
+            if (state.autoRelated) {
+                showToast('🤖 البحث الذكي مفعّل! جرّب البحث وافتح صورة', 4000);
+            }
+        }, 1000);
+
+        // ═══════════════════════════════════════════════════════════
+        //                  📊 معلومات المطور (Console)
+        // ═══════════════════════════════════════════════════════════
+        
+        console.log(`
+╔════════════════════════════════════════════════════════════════╗
+║               معرض الصور الذكي v2.0                           ║
+╠════════════════════════════════════════════════════════════════╣
+║  🤖 البحث الذكي: ${state.autoRelated ? 'مفعّل ✅' : 'معطّل ❌'}                         ║
+║  🧠 الاهتمامات المحفوظة: ${state.taste.length} صورة                        ║
+║  ⚙️ اضغط زر الإعدادات للتحكم                                  ║
+╠════════════════════════════════════════════════════════════════╣
+║  💡 نصائح:                                                     ║
+║     - جرّب: "mr robot", "anime", "طبيعة"                      ║
+║     - افتح صورة واتركها ثانيتين                              ║
+║     - localStorage.clear() لمسح البيانات                      ║
+╚════════════════════════════════════════════════════════════════╝
+        `);
+    </script>
+</body>
+</html>
